@@ -7,6 +7,9 @@ export interface IExpense extends Document {
   description: string;
   paidTo: string;
   receipt: string;
+  account: mongoose.Types.ObjectId;
+  paymentAccount: mongoose.Types.ObjectId;
+  entryId: mongoose.Types.ObjectId;
   createdBy: mongoose.Types.ObjectId;
 }
 
@@ -17,6 +20,9 @@ const expenseSchema = new Schema<IExpense>({
   description: { type: String, default: '' },
   paidTo: { type: String, default: '' },
   receipt: { type: String, default: '' },
+  account: { type: Schema.Types.ObjectId, ref: 'Account' },
+  paymentAccount: { type: Schema.Types.ObjectId, ref: 'Account' },
+  entryId: { type: Schema.Types.ObjectId, ref: 'JournalEntry' },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
 

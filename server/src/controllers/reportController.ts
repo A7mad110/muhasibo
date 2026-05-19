@@ -81,11 +81,22 @@ export const balanceSheet = async (_req: Request, res: Response) => {
     const assets: any[] = [];
     const liabilities: any[] = [];
     const equity: any[] = [];
+    let netIncome = 0;
     for (const acc of accounts) {
-      const item = { code: acc.code, nameAr: acc.nameAr, nameEn: acc.nameEn, balance: acc.balance };
-      if (acc.type === 'asset') assets.push(item);
-      else if (acc.type === 'liability') liabilities.push(item);
-      else if (acc.type === 'equity') equity.push(item);
+      if (acc.type === 'asset') {
+        assets.push({ code: acc.code, nameAr: acc.nameAr, nameEn: acc.nameEn, balance: acc.balance });
+      } else if (acc.type === 'liability') {
+        liabilities.push({ code: acc.code, nameAr: acc.nameAr, nameEn: acc.nameEn, balance: -acc.balance });
+      } else if (acc.type === 'equity') {
+        equity.push({ code: acc.code, nameAr: acc.nameAr, nameEn: acc.nameEn, balance: -acc.balance });
+      } else if (acc.type === 'income') {
+        netIncome += -acc.balance;
+      } else if (acc.type === 'expense') {
+        netIncome -= acc.balance;
+      }
+    }
+    if (Math.abs(netIncome) > 0.01) {
+      equity.push({ code: '', nameAr: 'صافي الدخل', nameEn: 'Net Income', balance: netIncome });
     }
     const totalAssets = assets.reduce((s, a) => s + a.balance, 0);
     const totalLiabilities = liabilities.reduce((s, l) => s + l.balance, 0);

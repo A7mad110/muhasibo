@@ -109,5 +109,8 @@ export interface Expense {
   description: string;
   paidTo: string;
   receipt: string;
+  account?: { _id: string; code: string; nameAr: string; nameEn: string };
+  paymentAccount?: { _id: string; code: string; nameAr: string; nameEn: string };
+  entryId?: string;
   createdBy: { _id: string; name: string };
 }

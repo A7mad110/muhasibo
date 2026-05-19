@@ -78,18 +78,46 @@ export default function ProductsPage() {
           <div className="bg-white rounded-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-bold mb-4">{editId ? 'Edit' : 'Add'} {t('products.title')}</h2>
             <div className="space-y-3">
-              <input className="input" placeholder={t('products.code')} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} />
-              <input className="input" placeholder={t('products.nameAr')} value={form.nameAr} onChange={(e) => setForm({ ...form, nameAr: e.target.value })} />
-              <input className="input" placeholder={t('products.nameEn')} value={form.nameEn} onChange={(e) => setForm({ ...form, nameEn: e.target.value })} />
-              <div className="grid grid-cols-2 gap-3">
-                <input className="input" type="number" placeholder={t('products.price')} value={form.price} onChange={(e) => setForm({ ...form, price: +e.target.value })} />
-                <input className="input" type="number" placeholder={t('products.cost')} value={form.cost} onChange={(e) => setForm({ ...form, cost: +e.target.value })} />
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('products.code')}</label>
+                <input className="input" placeholder={t('products.code')} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('products.nameAr')}</label>
+                <input className="input" placeholder={t('products.nameAr')} value={form.nameAr} onChange={(e) => setForm({ ...form, nameAr: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('products.nameEn')}</label>
+                <input className="input" placeholder={t('products.nameEn')} value={form.nameEn} onChange={(e) => setForm({ ...form, nameEn: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <input className="input" type="number" placeholder={t('products.qty')} value={form.quantity} onChange={(e) => setForm({ ...form, quantity: +e.target.value })} />
-                <input className="input" type="number" placeholder={t('products.minQuantity')} value={form.minQuantity} onChange={(e) => setForm({ ...form, minQuantity: +e.target.value })} />
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t('products.price')}</label>
+                  <input className="input" type="number" placeholder={t('products.price')} value={form.price} onChange={(e) => setForm({ ...form, price: +e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t('products.cost')}</label>
+                  <input className="input" type="number" placeholder={t('products.cost')} value={form.cost} onChange={(e) => setForm({ ...form, cost: +e.target.value })} />
+                </div>
               </div>
-              <input className="input" placeholder={t('products.unit')} value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t('products.qty')}</label>
+                  <input className="input" type="number" placeholder={t('products.qty')} value={form.quantity} onChange={(e) => setForm({ ...form, quantity: +e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t('products.minQuantity')}</label>
+                  <input className="input" type="number" placeholder={t('products.minQuantity')} value={form.minQuantity} onChange={(e) => setForm({ ...form, minQuantity: +e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('products.unit')}</label>
+                <input className="input" placeholder={t('products.unit')} value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('common.description')}</label>
+                <textarea className="input" rows={2} placeholder={t('common.description')} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              </div>
             </div>
             <div className="flex gap-2 mt-6 justify-end">
               <button onClick={() => setShowModal(false)} className="btn-secondary">{t('common.cancel')}</button>

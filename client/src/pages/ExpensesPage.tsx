@@ -1,19 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import API from '../services/api';
-import { Expense } from '../types';
+import { Expense, Account } from '../types';
 
 export default function ExpensesPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], category: '', amount: 0, description: '', paidTo: '' });
+  const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], category: '', amount: 0, description: '', paidTo: '', account: '', paymentAccount: '' });
 
   const fetchData = async () => {
-    try { const res = await API.get('/expenses'); setExpenses(res.data.data); } catch {} finally { setLoading(false); }
+    try {
+      const [expRes, accRes] = await Promise.all([API.get('/expenses'), API.get('/accounts')]);
+      setExpenses(expRes.data.data);
+      setAccounts(accRes.data.data);
+    } catch {} finally { setLoading(false); }
   };
   useEffect(() => { fetchData(); }, []);
+
+  const expenseAccounts = accounts.filter(a => a.type === 'expense' && a.active);
+  const paymentAccounts = accounts.filter(a => a.type === 'asset' && a.active);
 
   const handleSave = async () => {
     await API.post('/expenses', form);
@@ -28,6 +36,7 @@ export default function ExpensesPage() {
   };
 
   const total = expenses.reduce((s, e) => s + e.amount, 0);
+  const lang = i18n.language === 'ar' ? 'ar' : 'en';
 
   return (
     <div>
@@ -49,6 +58,7 @@ export default function ExpensesPage() {
                 <thead><tr className="bg-gray-50 border-b">
                   <th className="table-header">{t('expenses.date')}</th>
                   <th className="table-header">{t('expenses.category')}</th>
+                  <th className="table-header">{t('accounts.title')}</th>
                   <th className="table-header">{t('expenses.description')}</th>
                   <th className="table-header">{t('expenses.paidTo')}</th>
                   <th className="table-header">{t('expenses.amount')}</th>
@@ -59,6 +69,7 @@ export default function ExpensesPage() {
                     <tr key={e._id} className="hover:bg-gray-50">
                       <td className="table-cell text-sm text-gray-500">{new Date(e.date).toLocaleDateString()}</td>
                       <td className="table-cell">{e.category}</td>
+                      <td className="table-cell text-sm text-gray-500">{e.account ? (lang === 'ar' ? e.account.nameAr : e.account.nameEn) : '-'}</td>
                       <td className="table-cell text-gray-500">{e.description || '-'}</td>
                       <td className="table-cell text-gray-500">{e.paidTo || '-'}</td>
                       <td className="table-cell font-medium text-red-600">{e.amount.toLocaleString()}</td>
@@ -83,10 +94,40 @@ export default function ExpensesPage() {
                 <label className="block text-sm font-medium mb-1">{t('expenses.date')}</label>
                 <input type="date" className="input" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
               </div>
-              <input className="input" placeholder={t('expenses.category')} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
-              <input className="input" type="number" placeholder={t('expenses.amount')} value={form.amount} onChange={(e) => setForm({ ...form, amount: +e.target.value })} />
-              <input className="input" placeholder={t('expenses.description')} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-              <input className="input" placeholder={t('expenses.paidTo')} value={form.paidTo} onChange={(e) => setForm({ ...form, paidTo: e.target.value })} />
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('expenses.category')}</label>
+                <input className="input" placeholder={t('expenses.category')} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('expenses.amount')}</label>
+                <input className="input" type="number" placeholder={t('expenses.amount')} value={form.amount} onChange={(e) => setForm({ ...form, amount: +e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('expenses.expenseAccount')}</label>
+                <select className="input" value={form.account} onChange={(e) => setForm({ ...form, account: e.target.value })}>
+                  <option value="">-- {t('expenses.expenseAccount')} --</option>
+                  {expenseAccounts.map(a => (
+                    <option key={a._id} value={a._id}>{a.code} - {lang === 'ar' ? a.nameAr : a.nameEn}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('expenses.paymentAccount')}</label>
+                <select className="input" value={form.paymentAccount} onChange={(e) => setForm({ ...form, paymentAccount: e.target.value })}>
+                  <option value="">-- {t('expenses.paymentAccount')} --</option>
+                  {paymentAccounts.map(a => (
+                    <option key={a._id} value={a._id}>{a.code} - {lang === 'ar' ? a.nameAr : a.nameEn}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('expenses.description')}</label>
+                <input className="input" placeholder={t('expenses.description')} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('expenses.paidTo')}</label>
+                <input className="input" placeholder={t('expenses.paidTo')} value={form.paidTo} onChange={(e) => setForm({ ...form, paidTo: e.target.value })} />
+              </div>
             </div>
             <div className="flex gap-2 mt-6 justify-end">
               <button onClick={() => setShowModal(false)} className="btn-secondary">{t('common.cancel')}</button>
