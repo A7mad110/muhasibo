@@ -13,11 +13,13 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [apiUrl, setApiUrl] = useState(localStorage.getItem('api_url') || 'https://muhasibo.onrender.com/api');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSubmitting(true);
     try {
       if (isRegister) {
         await register(name, email, password);
@@ -26,7 +28,12 @@ export default function LoginPage() {
       }
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.message || t('auth.wrongCredentials'));
+      const msg = err.code === 'ECONNABORTED' || err.message?.includes('timeout')
+        ? 'الخادم في وضع السكون، يرجى الانتظار 30-50 ثانية ثم المحاولة مجدداً\nServer is sleeping, please wait 30-50 seconds and try again'
+        : (err.response?.data?.message || t('auth.wrongCredentials'));
+      setError(msg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -48,29 +55,30 @@ export default function LoginPage() {
             <button className="btn-primary text-xs" onClick={() => { localStorage.setItem('api_url', apiUrl); alert('Saved!'); window.location.reload(); }}>Save</button>
           </div>
         </details>
-        {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">{error}</div>}
+        {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm whitespace-pre-line">{error}</div>}
+        {submitting && <div className="bg-blue-50 text-blue-600 p-3 rounded-lg mb-4 text-sm text-center">جاري الاتصال بالخادم... Connecting to server...</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
           {isRegister && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.name')}</label>
-              <input className="input" value={name} onChange={(e) => setName(e.target.value)} required />
+              <input className="input" value={name} onChange={(e) => setName(e.target.value)} required disabled={submitting} />
             </div>
           )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.email')}</label>
-            <input type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <input type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={submitting} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.password')}</label>
-            <input type="password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+            <input type="password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} disabled={submitting} />
           </div>
-          <button type="submit" className="btn-primary w-full justify-center py-3">
-            {isRegister ? t('auth.register') : t('auth.loginBtn')}
+          <button type="submit" className="btn-primary w-full justify-center py-3" disabled={submitting}>
+            {submitting ? '...' : (isRegister ? t('auth.register') : t('auth.loginBtn'))}
           </button>
         </form>
         <p className="text-center mt-4 text-sm text-gray-500">
           {isRegister ? t('auth.haveAccount') : t('auth.noAccount')}
-          <button onClick={() => setIsRegister(!isRegister)} className="text-blue-600 mr-1 hover:underline">
+          <button onClick={() => setIsRegister(!isRegister)} className="text-blue-600 mr-1 hover:underline" disabled={submitting}>
             {isRegister ? t('auth.login') : t('auth.register')}
           </button>
         </p>

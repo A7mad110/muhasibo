@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../services/authContext';
 import { changeLang } from '../i18n';
 
-const navItems = [
+const baseNavItems = [
   { path: '/', label: 'nav.dashboard', icon: '📊' },
   { path: '/accounts', label: 'nav.accounts', icon: '📋' },
   { path: '/journal', label: 'nav.journal', icon: '📝' },
@@ -18,15 +18,18 @@ const navItems = [
   { path: '/balance-sheet', label: 'nav.balanceSheet', icon: '📉' },
 ];
 
-if (localStorage.getItem('user') && JSON.parse(localStorage.getItem('user') || '{}').role === 'admin') {
-  navItems.push({ path: '/users', label: 'nav.users', icon: '👤' });
-}
-
 export default function Layout() {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const navItems = useMemo(() => {
+    if (user?.role === 'admin') {
+      return [...baseNavItems, { path: '/users', label: 'nav.users', icon: '👤' as const }];
+    }
+    return baseNavItems;
+  }, [user]);
 
   return (
     <div className="min-h-screen flex">

@@ -13,8 +13,18 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>(null!);
 
+function getStoredUser(): User | null {
+  try {
+    return JSON.parse(localStorage.getItem('user') || 'null');
+  } catch {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    return null;
+  }
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(JSON.parse(localStorage.getItem('user') || 'null'));
+  const [user, setUser] = useState<User | null>(getStoredUser);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
