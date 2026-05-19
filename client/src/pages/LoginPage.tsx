@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [apiUrl, setApiUrl] = useState(localStorage.getItem('api_url') || 'https://muhasibo-api.onrender.com/api');
+  const [apiUrl, setApiUrl] = useState(localStorage.getItem('api_url') || 'https://muhasibo.onrender.com/api');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
