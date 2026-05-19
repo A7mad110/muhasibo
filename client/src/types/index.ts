@@ -58,7 +58,7 @@ export interface Invoice {
 }
 
 export interface InvoiceItem {
-  product: string;
+  product: string | { _id: string; nameAr?: string; nameEn?: string; code?: string };
   description: string;
   quantity: number;
   unitPrice: number;

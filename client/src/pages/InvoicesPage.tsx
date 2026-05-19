@@ -13,11 +13,12 @@ export default function InvoicesPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const [filter, setFilter] = useState('all');
   const [form, setForm] = useState<any>({
     number: '', type: 'sales', date: new Date().toISOString().split('T')[0],
     dueDate: '', customer: '', vendor: '', items: [{ product: '', description: '', quantity: 1, unitPrice: 0, total: 0 }],
-    subtotal: 0, tax: 0, discount: 0, total: 0, notes: '',
+    subtotal: 0, tax: 0, discount: 0, total: 0, paid: 0, status: 'draft', notes: '',
   });
 
   const fetchData = async () => {
@@ -36,6 +37,25 @@ export default function InvoicesPage() {
 
   const canEdit = user?.role === 'admin' || user?.role === 'accountant';
 
+  const openAdd = () => {
+    setEditId(null);
+    setForm({ number: `INV-${Date.now()}`, type: 'sales', date: new Date().toISOString().split('T')[0], dueDate: '', customer: '', vendor: '', items: [{ product: '', description: '', quantity: 1, unitPrice: 0, total: 0 }], subtotal: 0, tax: 0, discount: 0, total: 0, paid: 0, status: 'draft', notes: '' });
+    setShowModal(true);
+  };
+
+  const openEdit = (inv: Invoice) => {
+    setEditId(inv._id);
+    setForm({
+      number: inv.number, type: inv.type, date: new Date(inv.date).toISOString().split('T')[0],
+      dueDate: inv.dueDate ? new Date(inv.dueDate).toISOString().split('T')[0] : '',
+      customer: inv.customer?._id || '', vendor: inv.vendor?._id || '',
+      items: inv.items.map(i => ({ product: typeof i.product === 'object' ? i.product._id : i.product, description: i.description, quantity: i.quantity, unitPrice: i.unitPrice, total: i.total })),
+      subtotal: inv.subtotal, tax: inv.tax, discount: inv.discount, total: inv.total,
+      paid: inv.paid, status: inv.status, notes: inv.notes || '',
+    });
+    setShowModal(true);
+  };
+
   const addItem = () => setForm({ ...form, items: [...form.items, { product: '', description: '', quantity: 1, unitPrice: 0, total: 0 }] });
 
   const updateItem = (i: number, field: string, value: any) => {
@@ -50,8 +70,18 @@ export default function InvoicesPage() {
   };
 
   const handleSave = async () => {
-    await API.post('/invoices', form);
+    if (editId) {
+      await API.put(`/invoices/${editId}`, form);
+    } else {
+      await API.post('/invoices', form);
+    }
     setShowModal(false);
+    fetchData();
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete?')) return;
+    await API.delete(`/invoices/${id}`);
     fetchData();
   };
 
@@ -62,7 +92,7 @@ export default function InvoicesPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">{t('invoices.title')}</h1>
-        {canEdit && <button onClick={() => { setForm({ number: `INV-${Date.now()}`, type: 'sales', date: new Date().toISOString().split('T')[0], dueDate: '', customer: '', vendor: '', items: [{ product: '', description: '', quantity: 1, unitPrice: 0, total: 0 }], subtotal: 0, tax: 0, discount: 0, total: 0, notes: '' }); setShowModal(true); }} className="btn-primary">{t('invoices.add')}</button>}
+        {canEdit && <button onClick={openAdd} className="btn-primary">{t('invoices.add')}</button>}
       </div>
       <div className="flex gap-2 mb-4">
         {['all', 'sales', 'purchase'].map((f) => (
@@ -84,6 +114,7 @@ export default function InvoicesPage() {
                   <th className="table-header">{t('invoices.total')}</th>
                   <th className="table-header">{t('invoices.paid')}</th>
                   <th className="table-header">{t('invoices.status')}</th>
+                  <th className="table-header">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -95,6 +126,10 @@ export default function InvoicesPage() {
                     <td className="table-cell font-medium">{inv.total.toLocaleString()}</td>
                     <td className="table-cell">{inv.paid.toLocaleString()}</td>
                     <td className="table-cell"><span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[inv.status]}`}>{t(`invoices.${inv.status}`)}</span></td>
+                    <td className="table-cell">
+                      {canEdit && <button onClick={() => openEdit(inv)} className="text-blue-600 mr-2">{t('common.edit')}</button>}
+                      {user?.role === 'admin' && <button onClick={() => handleDelete(inv._id)} className="text-red-600">{t('common.delete')}</button>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -106,7 +141,7 @@ export default function InvoicesPage() {
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setShowModal(false)}>
           <div className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold mb-4">{t('invoices.add')}</h2>
+            <h2 className="text-lg font-bold mb-4">{editId ? t('common.edit') : t('invoices.add')} {t('invoices.title')}</h2>
             <div className="space-y-3">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <div>
@@ -130,20 +165,23 @@ export default function InvoicesPage() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium mb-1">{t('invoices.customer')}</label>
-                  <select className="input text-sm" value={form.customer} onChange={(e) => setForm({ ...form, customer: e.target.value })}>
-                    <option value="">--</option>
-                    {customers.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">{t('invoices.vendor')}</label>
-                  <select className="input text-sm" value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value })}>
-                    <option value="">--</option>
-                    {vendors.map((v) => <option key={v._id} value={v._id}>{v.name}</option>)}
-                  </select>
-                </div>
+                {form.type === 'sales' ? (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">{t('invoices.customer')}</label>
+                    <select className="input text-sm" value={form.customer} onChange={(e) => setForm({ ...form, customer: e.target.value, vendor: '' })}>
+                      <option value="">--</option>
+                      {customers.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">{t('invoices.vendor')}</label>
+                    <select className="input text-sm" value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value, customer: '' })}>
+                      <option value="">--</option>
+                      {vendors.map((v) => <option key={v._id} value={v._id}>{v.name}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
               <div className="border rounded-lg p-3">
                 <table className="w-full text-sm">
@@ -202,6 +240,25 @@ export default function InvoicesPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">{t('invoices.total')}</label>
                 <input className="input text-lg font-bold" value={form.total.toLocaleString()} readOnly />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t('invoices.paid')}</label>
+                  <input type="number" className="input text-sm" value={form.paid} onChange={(e) => setForm({ ...form, paid: +e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t('invoices.status')}</label>
+                  <select className="input text-sm" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                    <option value="draft">{t('invoices.draft')}</option>
+                    <option value="confirmed">{t('invoices.confirmed')}</option>
+                    <option value="paid">{t('invoices.paidStatus')}</option>
+                    <option value="cancelled">{t('invoices.cancelled')}</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('common.description')}</label>
+                <textarea className="input text-sm" rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
               </div>
             </div>
             <div className="flex gap-2 mt-6 justify-end">
