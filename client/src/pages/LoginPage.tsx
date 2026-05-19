@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [apiUrl, setApiUrl] = useState(localStorage.getItem('api_url') || 'https://muhasibo-api.onrender.com/api');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +41,13 @@ export default function LoginPage() {
           <button onClick={() => changeLang('ar')} className="px-3 py-1 text-sm rounded-full bg-blue-100 text-blue-700">العربية</button>
           <button onClick={() => changeLang('en')} className="px-3 py-1 text-sm rounded-full bg-blue-100 text-blue-700">English</button>
         </div>
+        <details className="mb-4 text-xs text-gray-400">
+          <summary className="cursor-pointer">API Settings</summary>
+          <div className="mt-2 flex gap-2">
+            <input className="input text-xs" value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} placeholder="API URL" />
+            <button className="btn-primary text-xs" onClick={() => { localStorage.setItem('api_url', apiUrl); alert('Saved!'); window.location.reload(); }}>Save</button>
+          </div>
+        </details>
         {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
           {isRegister && (
