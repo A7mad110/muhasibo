@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const storedUrl = localStorage.getItem('api_url');
-const API = axios.create({ baseURL: storedUrl || import.meta.env.VITE_API_URL || '/api' });
+const API = axios.create({ baseURL: storedUrl || import.meta.env.VITE_API_URL || 'https://muhasibo.onrender.com/api' });
 
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
